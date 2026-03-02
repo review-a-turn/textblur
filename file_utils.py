@@ -41,6 +41,7 @@ def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=
             None
         """
         img = np.array(img)
+        mask = np.zeros(img.shape)
 
         # make result file list
         filename, file_ext = os.path.splitext(os.path.basename(img_file))
@@ -59,19 +60,10 @@ def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=
                 f.write(strResult)
 
                 poly = poly.reshape(-1, 2)
-                #cv2.polylines(img, [poly.reshape((-1, 1, 2))], True, color=(0, 0, 255), thickness=2)
-                cv2.fillPoly(img, pts=poly.reshape((1, -1, 2)), color=(255, 255, 255))
-                ptColor = (0, 255, 255)
-                if verticals is not None:
-                    if verticals[i]:
-                        ptColor = (255, 0, 0)
-
-                if texts is not None:
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_scale = 0.5
-                    cv2.putText(img, "{}".format(texts[i]), (poly[0][0]+1, poly[0][1]+1), font, font_scale, (0, 0, 0), thickness=1)
-                    cv2.putText(img, "{}".format(texts[i]), tuple(poly[0]), font, font_scale, (0, 255, 255), thickness=1)
+                cv2.fillPoly(mask, pts=poly.reshape((1, -1, 2)), color=(1, 1, 1))
 
         # Save result image
+        blurred_img = cv2.GaussianBlur(img, (255, 255), 0)
+        img = img * (1 - mask) + blurred_img * mask
         cv2.imwrite(res_img_file, img)
 
