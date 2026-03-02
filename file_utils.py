@@ -30,7 +30,7 @@ def list_files(in_path):
     # gt_files.sort()
     return img_files, mask_files, gt_files
 
-def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=None):
+def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=None, basepath=""):
         """ save text detection result one by one
         Args:
             img_file (str): image file name
@@ -43,24 +43,20 @@ def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=
         img = np.array(img)
         mask = np.zeros(img.shape)
 
-        # make result file list
-        filename, file_ext = os.path.splitext(os.path.basename(img_file))
-
         # result directory
-        res_file = os.path.join(dirname, "res_" + filename + '.txt')
-        res_img_file = os.path.join(dirname, "res_" + filename + '.jpg')
+        relpath = os.path.relpath(img_file, basepath)
+        reldir = os.path.dirname(relpath)
+        if reldir:
+            os.makedirs(os.path.join(dirname, reldir), exist_ok=True)
+        res_img_file = os.path.join(dirname, relpath)
 
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
 
-        with open(res_file, 'w') as f:
-            for i, box in enumerate(boxes):
-                poly = np.array(box).astype(np.int32).reshape((-1))
-                strResult = ','.join([str(p) for p in poly]) + '\r\n'
-                f.write(strResult)
-
-                poly = poly.reshape(-1, 2)
-                cv2.fillPoly(mask, pts=poly.reshape((1, -1, 2)), color=(1, 1, 1))
+        for i, box in enumerate(boxes):
+            poly = np.array(box).astype(np.int32).reshape((-1))
+            poly = poly.reshape(-1, 2)
+            cv2.fillPoly(mask, pts=poly.reshape((1, -1, 2)), color=(1, 1, 1))
 
         # Save result image
         blurred_img = cv2.GaussianBlur(img, (255, 255), 0)
